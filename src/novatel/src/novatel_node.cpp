@@ -529,7 +529,7 @@ public:
 		
 		geodesy::UTMPoint utm;
 		geodesy::fromMsg(point, utm);
-		
+/* by lc begin		
 		ll2utm_msg.pose.pose.position.x = utm.easting;
 		ll2utm_msg.pose.pose.position.y = utm.northing;
 		ll2utm_msg.pose.pose.position.z = utm.altitude;
@@ -543,7 +543,7 @@ public:
 		Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitX());
 		Eigen::Quaterniond q = yawAngle * rollAngle* pitchAngle;
 		q.normalize();
-		
+	
 		ll2utm_msg.pose.pose.orientation.x = q.x();
 		ll2utm_msg.pose.pose.orientation.y = q.y();
 		ll2utm_msg.pose.pose.orientation.z = q.z();
@@ -558,14 +558,22 @@ public:
 		
 		ll2utm_msg.pose.covariance[6] = inspvax.north_velocity;
 		ll2utm_msg.pose.covariance[7] = inspvax.east_velocity;
-		
+by lc end*/	
 		float speed_yaw = atan2(inspvax.east_velocity, inspvax.north_velocity);
 		float sideslip_angle = fabs(speed_yaw - deg2rad(inspvax.azimuth));
 		float speed = sqrt(inspvax.east_velocity*inspvax.east_velocity+inspvax.north_velocity*inspvax.north_velocity);
-		
-		ll2utm_msg.twist.twist.linear.x = speed * sin(sideslip_angle);
-		ll2utm_msg.twist.twist.linear.y = speed * cos(sideslip_angle);
 
+		//ll2utm_msg.twist.twist.linear.x = speed * sin(sideslip_angle);
+		//ll2utm_msg.twist.twist.linear.y = speed * cos(sideslip_angle);
+//add by lc begin
+    ll2utm_msg.twist.twist.linear.y = stamp.toSec();//UTC
+		ll2utm_msg.pose.pose.position.x = utm.easting;//utm x
+		ll2utm_msg.pose.pose.position.y = utm.northing;//utm y
+    ll2utm_msg.pose.covariance[0] = inspvax.longitude;// longitude
+    ll2utm_msg.pose.covariance[1] = inspvax.latitude;// latitude
+    ll2utm_msg.pose.covariance[2] = deg2rad(( inspvax.azimuth - 90 ));//yaw
+    ll2utm_msg.twist.twist.linear.x = speed * cos(sideslip_angle);//speed vx
+//add by lc end
 		ll2utm_publisher_.publish(ll2utm_msg);
 	}
 	
